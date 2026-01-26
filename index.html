@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>CH RP System - v1.3.1.7</title>
+<title>CH RP System - v1.3.1.9</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -25,7 +25,6 @@ body{ margin:0; font-family:Arial, sans-serif; background:var(--bg); color:var(-
 .hidden{display:none}
 .card{ background:var(--card); border-radius:12px; padding:16px; margin-bottom:15px; border:1px solid var(--border); }
 
-/* Inputs */
 input, textarea, select { 
   width:100%; padding:10px; border-radius:8px; border:1px solid #334155; 
   background:#020617; color:#fff; margin-bottom: 8px; 
@@ -34,13 +33,12 @@ button{ padding:12px; border:none; border-radius:10px; font-weight:bold; cursor:
 button:active { transform: scale(0.98); }
 .btn{background:var(--primary);color:#020617}
 .btn-danger{background:var(--danger);color:#fff}
+.btn-outline{background:transparent; border:1px solid var(--muted); color:var(--muted); margin-bottom:15px;}
 
-/* Grid System */
 .grid-header { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 13px; }
 .grid-header div { border-bottom: 1px solid #1f2933; padding: 4px 0; }
 .grid-header b { color: var(--primary); margin-right: 5px; }
 
-/* Table */
 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); }
 th { background: #1e293b; color: var(--primary); font-size: 12px; text-transform: uppercase; }
@@ -73,21 +71,17 @@ th { background: #1e293b; color: var(--primary); font-size: 12px; text-transform
 </div>
 
 <div id="home" class="container hidden">
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15vh;">
-    <button class="card" onclick="openMode('coletor')" 
-        style="height:200px; font-size:22px; color:#ffffff;">
-  📦 COLETOR
-</button>
-
-<button class="card" onclick="openMode('admin')" 
-        style="height:200px; font-size:22px; color:#ffffff;">
-  💻 ADMIN
-</button>
-
+  <div style="text-align:center; margin-bottom: 30px;">
+      <h1 style="color:var(--primary)">logo oficial</h1>
+  </div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 5vh;">
+    <button class="card" onclick="openMode('coletor')" style="height:200px; font-size:22px; color:#ffffff;">📦 COLETOR</button>
+    <button class="card" onclick="openMode('admin')" style="height:200px; font-size:22px; color:#ffffff;">💻 ADMIN</button>
   </div>
 </div>
 
 <div id="coletor" class="container hidden">
+    <button class="btn-outline" onclick="location.reload()">⬅ Voltar ao Menu</button>
     <h2 style="color:var(--primary);text-align:center">Recebimento Operacional</h2>
     
     <div id="loginBox" class="card">
@@ -103,8 +97,7 @@ th { background: #1e293b; color: var(--primary); font-size: 12px; text-transform
       </div>
     </div>
 
-    <div id="cabecalhoDisplay" class="card hidden">
-        </div>
+    <div id="cabecalhoDisplay" class="card hidden"></div>
     
     <div id="itensBox" class="card hidden" style="overflow-x:auto">
       <table id="tabelaColetor">
@@ -118,10 +111,12 @@ th { background: #1e293b; color: var(--primary); font-size: 12px; text-transform
         </thead>
         <tbody id="listaItensColetor"></tbody>
       </table>
+      <button id="btnFinalizar" class="btn-danger" style="width:100%; margin-top:20px; height:60px; font-size:18px" onclick="finalizarDT()">FINALIZAR DT</button>
     </div>
 </div>
 
 <div id="admin" class="container hidden">
+    <button class="btn-outline" onclick="location.reload()">⬅ Voltar ao Menu</button>
     <h2 style="color:var(--primary);text-align:center">Painel de Gestão</h2>
     <div id="adminLoginBox" class="card">
         <input id="adminEmail" placeholder="E-mail Admin">
@@ -147,7 +142,7 @@ th { background: #1e293b; color: var(--primary); font-size: 12px; text-transform
             <div><b>Volume (m³):</b> <input id="volumeTotal" type="number" step="any"></div>
             <div><b>SKU's:</b> <input id="skus" type="number"></div>
         </div>
-        <textarea id="excelPaste" class="card" rows="3" placeholder="Cole aqui as colunas do Excel..."></textarea>
+        <textarea id="excelPaste" class="card" rows="3" placeholder="Cole aqui: Cód | Descrição | PL Prev | CX Prev"></textarea>
         <button class="btn-warn" style="width:100%; margin-bottom: 20px;" onclick="importarExcel()">Processar Excel</button>
         
         <div class="card" style="overflow-x:auto">
@@ -181,7 +176,7 @@ window.showModal=(t,m)=>{ modalTitle.innerText=t; modalMsg.innerText=m; modal.st
 window.closeModal=()=>modal.style.display="none";
 window.openMode=(m)=>{ document.querySelectorAll('.container').forEach(c => c.classList.add('hidden')); document.getElementById(m).classList.remove('hidden'); }
 
-/* ADMIN */
+/* ADMIN LOGIC */
 let itensAdmin = {};
 window.loginAdmin=async()=>{
     try {
@@ -195,7 +190,15 @@ window.importarExcel = () => {
     const raw = excelPaste.value.split('\n');
     raw.forEach(l => {
         const c = l.split('\t');
-        if(c.length >= 2) itensAdmin[c[0].trim()] = { descricao: c[1].trim(), plPrevisto: Number(c[2])||0, cxPrevisto: Number(c[3])||0, plRecebido:0, cxRecebido:0 };
+        if(c.length >= 2) {
+            itensAdmin[c[0].trim()] = { 
+                descricao: c[1].trim(), 
+                plPrevisto: Number(c[2])||0, 
+                cxPrevisto: Number(c[3])||0, 
+                plRecebido:0, 
+                cxRecebido:0 
+            };
+        }
     });
     renderAdmin(); excelPaste.value = "";
 }
@@ -222,7 +225,7 @@ window.salvarDT=async()=>{
     } catch(e) { btnSalvarDT.disabled = false; btnSalvarDT.innerText = "SALVAR DT"; showModal("Erro", e.message); }
 }
 
-/* COLETOR */
+/* COLETOR LOGIC */
 let dadosDT = null;
 window.login=async()=>{
     try {
@@ -240,7 +243,6 @@ window.buscarDT=async()=>{
 }
 
 function renderColetor(){
-    // Cabeçalho com os 15 campos
     cabecalhoDisplay.classList.remove('hidden');
     cabecalhoDisplay.innerHTML = `
         <h3 style="margin:0 0 10px; color:var(--primary)">Dados da DT: ${dadosDT.dt}</h3>
@@ -263,7 +265,6 @@ function renderColetor(){
         </div>
     `;
 
-    // Itens sem coluna "Previsto"
     itensBox.classList.remove('hidden');
     listaItensColetor.innerHTML = "";
     Object.keys(dadosDT.itens).forEach(k => {
@@ -271,7 +272,9 @@ function renderColetor(){
         listaItensColetor.innerHTML += `
             <tr>
                 <td><b>${k}</b><br><small>${it.descricao}</small></td>
-                <td style="color:var(--ok)">PL: ${it.plRecebido}<br>CX: ${it.cxRecebido}</td>
+                <td>
+                  <b style="color:var(--ok)">PL: ${it.plRecebido} | CX: ${it.cxRecebido}</b>
+                </td>
                 <td>
                     <input type="number" id="p_${k}" class="col-input" placeholder="+PL">
                     <input type="number" id="c_${k}" class="col-input" placeholder="+CX">
@@ -283,17 +286,56 @@ function renderColetor(){
 }
 
 window.receber=async(k)=>{
-    const p = Number(document.getElementById('p_'+k).value) || 0;
-    const c = Number(document.getElementById('c_'+k).value) || 0;
+    const pInput = document.getElementById('p_'+k);
+    const cInput = document.getElementById('c_'+k);
+    const p = Number(pInput.value) || 0;
+    const c = Number(cInput.value) || 0;
     if(p === 0 && c === 0) return;
+
+    const item = dadosDT.itens[k];
+    const novoPl = item.plRecebido + p;
+    const novoCx = item.cxRecebido + c;
+
+    // TRAVA: NÃO RECEBER A MAIS (Valida contra o programado que está no banco)
+    if(novoPl > item.plPrevisto || novoCx > item.cxPrevisto){
+        return showModal("Bloqueado", `Quantidade excede o programado para este item!`);
+    }
     
-    dadosDT.itens[k].plRecebido += p;
-    dadosDT.itens[k].cxRecebido += c;
+    item.plRecebido = novoPl;
+    item.cxRecebido = novoCx;
     
     try {
         await updateDoc(doc(db, "recebimentos", dadosDT.dt), { itens: dadosDT.itens });
         renderColetor();
+        pInput.value = ""; cInput.value = "";
     } catch(e) { showModal("Erro", "Falha ao sincronizar."); }
+}
+
+window.finalizarDT=async()=>{
+    if(!dadosDT) return;
+    
+    let pendente = false;
+
+    Object.keys(dadosDT.itens).forEach(k => {
+        const it = dadosDT.itens[k];
+        if(it.plRecebido < it.plPrevisto || it.cxRecebido < it.cxPrevisto){
+            pendente = true;
+        }
+    });
+
+    // TRAVA: NÃO FINALIZAR SE ESTIVER ABAIXO
+    if(pendente){
+        return showModal("Pendente", "Não é possível finalizar: existem itens com quantidades abaixo do programado.");
+    }
+
+    try {
+        await updateDoc(doc(db, "recebimentos", dadosDT.dt), { 
+            status: "FINALIZADA",
+            finalizadoEm: new Date().toISOString()
+        });
+        showModal("Sucesso", "DT Finalizada com sucesso!");
+        setTimeout(()=>location.reload(), 2000);
+    } catch(e) { showModal("Erro", "Erro ao finalizar no servidor."); }
 }
 
 </script>
